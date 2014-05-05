@@ -1,0 +1,81 @@
+<?php
+/**
+ * @file
+ * Install file of module.
+ */
+
+/**
+ * Implements hook_schema().
+ *
+ * @return array
+ */
+
+function addressbook_schema() {
+  return array(
+    'contact' => array(
+      'description' => t('This table is intended to store contacts data.'),
+      'fields' => array(
+        'cid' => array(
+          'description' => 'Contact ID',
+          'type' => 'serial',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'title' => array(
+          'description' => 'Contains label for Contact',
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+          'default' => '',
+        ),
+
+      //   'first_name' => array(
+      //     'description' => 'First name',
+      //     'type' => 'varchar',
+      //     'length' => 60,
+      //   ),
+      //   'last_name' => array(
+      //     'description' => 'Last name',
+      //     'type' => 'varchar',
+      //     'length' => 60,
+      //   ),
+      //   'email' => array(
+      //     'description' => 'E-mail',
+      //     'type' => 'varchar',
+      //     'length' => 254,
+      //   ),
+      //   'phone' => array(
+      //     'description' => 'Phone',
+      //     'type' => 'varchar',
+      //     'length' => 255,
+      //   ),
+      //   'birthday' => array(
+      //     'description' => 'Birthday',
+      //     'mysql_type' => 'DATE',
+      //   ),
+      //   'category' => array(
+      //     'description' => 'Category',
+      //     'type' => 'varchar',
+      //     'length' => 255,
+      //   ),
+      //   'notes' => array(
+      //     'description' => 'Notes',
+      //     'type' => 'text',
+      //   ),
+      //   'photo' => array(
+      //     'description' => 'File Id of the image that was uploaded in the photo field',
+      //     'type' => 'int',
+      //     'length' => 10,
+      //   ),
+      //   'user' => array(
+      //     'description' => 'ID of the user who created this contact',
+      //     'type' => 'int',
+      //     'length' => 10,
+      //     'not null' => TRUE,
+      //   ),
+      ),
+
+      'primary key' => array('cid'),
+    ),
+  );
+}

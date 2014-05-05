@@ -1,0 +1,6 @@
+name = "Address Book"
+description = "Allows user to create contacts"
+core = 7.x
+
+dependencies[] = views
+dependencies[] = date

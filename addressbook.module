@@ -1,0 +1,52 @@
+<?php
+/* Load CRUD functions */
+module_load_include('crud.inc', 'addressbook');
+
+/**
+ * Implements hook_entity_info()
+ * 
+ * @return array
+ */
+function addressbook_entity_info() {
+  return array(
+    'contact' => array(
+      'label' => t('Contact'),
+      'base table' => 'contact',
+      'fieldable' => TRUE,
+      'entity keys' => array(
+        'id' => 'cid',
+        'label' => 'title',
+      ),
+      'bundles' => array(
+        'contact' => array(
+          'label' => t('Contact'),
+          'admin' => array(
+            'path' => 'admin/content/contact',
+            'access arguments' => array('administer site configuration'),
+          ),
+        ),
+      ),
+      /* Entity Api-related parameters */
+      'controller class' => 'EntityApiController',
+      'entity class' => 'Entity',
+      'admin ui' => array(
+        'path' => 'admin/content/contact',
+        'file' => 'addressbook.admin.inc',
+      ),
+      'module' => 'addressbook',
+      'access callback' => 'addressbook_access',
+    ),
+  );
+}
+
+/**
+ * Access callback for Contact entities.
+ * 
+ * @param  $op
+ * @param  null $contact
+ * @param  null $account
+ * @return bool
+ */
+function addressbook_access($op, $contact = NULL, $account = NULL) {
+  return user_access('administer site configuration');
+}
