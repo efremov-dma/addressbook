@@ -3,4 +3,6 @@ description = "Allows user to create contacts"
 core = 7.x
 
 dependencies[] = views
+dependencies[] = views_bulk_operations
 dependencies[] = date
+dependencies[] = features
