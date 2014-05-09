@@ -6,3 +6,4 @@ dependencies[] = views
 dependencies[] = views_bulk_operations
 dependencies[] = date
 dependencies[] = features
+dependencies[] = addressbook_feature
