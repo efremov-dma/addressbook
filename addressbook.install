@@ -21,61 +21,60 @@ function addressbook_schema() {
           'unsigned' => TRUE,
           'not null' => TRUE,
         ),
-        'title' => array(
-          'description' => 'Contains label for Contact',
-          'type' => 'varchar',
-          'length' => 255,
+        'created' => array(
+          'description' => 'Contains creation date',
+          'type' => 'int',
+          'unsigned' => TRUE,
           'not null' => TRUE,
-          'default' => '',
+          'default' => 0
         ),
-
-      //   'first_name' => array(
-      //     'description' => 'First name',
-      //     'type' => 'varchar',
-      //     'length' => 60,
-      //   ),
-      //   'last_name' => array(
-      //     'description' => 'Last name',
-      //     'type' => 'varchar',
-      //     'length' => 60,
-      //   ),
-      //   'email' => array(
-      //     'description' => 'E-mail',
-      //     'type' => 'varchar',
-      //     'length' => 254,
-      //   ),
-      //   'phone' => array(
-      //     'description' => 'Phone',
-      //     'type' => 'varchar',
-      //     'length' => 255,
-      //   ),
-      //   'birthday' => array(
-      //     'description' => 'Birthday',
-      //     'mysql_type' => 'DATE',
-      //   ),
-      //   'category' => array(
-      //     'description' => 'Category',
-      //     'type' => 'varchar',
-      //     'length' => 255,
-      //   ),
-      //   'notes' => array(
-      //     'description' => 'Notes',
-      //     'type' => 'text',
-      //   ),
-      //   'photo' => array(
-      //     'description' => 'File Id of the image that was uploaded in the photo field',
-      //     'type' => 'int',
-      //     'length' => 10,
-      //   ),
-      //   'user' => array(
-      //     'description' => 'ID of the user who created this contact',
-      //     'type' => 'int',
-      //     'length' => 10,
-      //     'not null' => TRUE,
-      //   ),
+        'user_id' => array(
+          'description' => 'ID of the user who created this contact.',
+          'type' => 'int',
+          'length' => 10,
+          'not null' => TRUE,
+        ), 
       ),
 
       'primary key' => array('cid'),
     ),
   );
+}
+
+
+
+/**
+ * Implements hook_install()
+ */
+function addressbook_install() {
+  /* Create custom vocabulary for Categories */
+  $vocab = (object) array(
+    'name' => 'Address Book Categories',
+    'description' => 'Categories for your contact.',
+    'machine_name' => 'addresbook_categories',
+  );
+  taxonomy_vocabulary_save($vocab);
+
+  /* Add terms to the custom vocabulary */
+  $vocab = taxonomy_vocabulary_machine_name_load('addresbook_categories');
+  for ($i = 1; $i <= 5; $i++) {
+    $term = (object) array(
+       'name' => 'Category ' . $i,
+       'description' => 'This is Category ' . $i,
+       'vid' => $vocab->vid,
+    );
+    taxonomy_term_save($term);
+  }
+}
+
+/**
+ * Implements hook_uninstall()
+ */
+function addressbook_uninstall() {
+  /* Remove custom vocabularies */
+  $vocab = taxonomy_vocabulary_machine_name_load('addresbook_categories');
+  taxonomy_vocabulary_delete($vocab->vid);
+
+  /* Remove attached fields */
+  field_attach_delete_bundle('contact', 'contact');
 }

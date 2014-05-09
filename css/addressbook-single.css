@@ -1,0 +1,25 @@
+#addressbook-single {
+	overflow: hidden;
+}
+
+.addressbook-contact-photo {
+	float: left;
+	margin-right: 40px;
+	width: 300px;
+}
+
+.addressbook-contact-photo img {
+	height: auto;
+	width: 100%;
+}
+
+.addressbook-contact-photo .addressbook-no-photo {
+	height: 300px;
+	border: 1px solid rgb(78, 78, 78);
+	line-height: 300px;
+	text-align: center;
+}
+
+.addressbook-contact-info {
+	/*float: right;*/
+}

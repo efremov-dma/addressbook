@@ -14,11 +14,25 @@
  * @return array
  */
 function contact_form($form, &$form_state, $contact, $op = 'edit') {
+  global $user;
 
-  $form['title'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Title'),
-      '#default_value' => isset($contact->title) ? $contact->title : '',
+  // $form['title'] = array(
+  //     '#type' => 'hidden',
+  //     '#title' => t('Title'),
+  //     '#default_value' => 'contact',
+  // );
+  // 
+  
+  $form['created'] = array(
+    '#type' => 'hidden',
+    '#title' => t('Created'),
+    '#default_value' => time(),
+  );
+
+  $form['user_id'] = array(
+    '#type' => 'hidden',
+    '#title' => t('user_id'),
+    '#default_value' => $user->uid,
   );
 
   $form['actions'] = array(
@@ -37,11 +51,9 @@ function contact_form($form, &$form_state, $contact, $op = 'edit') {
 
 function contact_form_submit($form, &$form_state) {
   $contact = entity_ui_form_submit_build_entity($form, $form_state);
-  
-
-  dsm($contact, 'contact');
-
   $contact->save();
-
-  $form_state['redirect'] = 'admin/content/contact';
+  $form_state['redirect'] = 'address-book';
 }
+
+
+

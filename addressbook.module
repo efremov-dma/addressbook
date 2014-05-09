@@ -3,9 +3,47 @@
 module_load_include('crud.inc', 'addressbook');
 
 /**
+ * Implements hook_theme()
+ */
+function addressbook_theme() {
+  return array(
+    'single_contact' => array(
+      'variables' => array(
+        'first_name' => '',
+        'last_name' => '',
+        'email' => '',
+        'phone' => '',
+        'birthday' => '',
+        'category' => '',
+        'notes' => '',
+        'photo' => '',
+        'contact_exist' => false,
+      ),
+      'path' => drupal_get_path('module', 'addressbook') . '/templates',
+      'template' => 'single-contact',
+    ),
+  );
+}
+
+
+/**
+ * Implements hook_menu().
+ */
+function addressbook_menu() {
+  return array(
+    'address-book/contact/%' => array(
+      'title' => 'Single Contact',
+      'title callback' => 'addressbook_single_contact_title',
+      'title arguments' => array(2),
+      'page callback' => 'addressbook_single_contact_page',
+      'page arguments' => array(2),
+      'access callback' => 'contact_access',
+    ),
+  );
+}
+
+/**
  * Implements hook_entity_info()
- * 
- * @return array
  */
 function addressbook_entity_info() {
   return array(
@@ -15,13 +53,13 @@ function addressbook_entity_info() {
       'fieldable' => TRUE,
       'entity keys' => array(
         'id' => 'cid',
-        'label' => 'title',
+        'label' => 'cid',
       ),
       'bundles' => array(
         'contact' => array(
           'label' => t('Contact'),
           'admin' => array(
-            'path' => 'admin/content/contact',
+            'path' => 'address-book',
             'access arguments' => array('administer site configuration'),
           ),
         ),
@@ -30,23 +68,101 @@ function addressbook_entity_info() {
       'controller class' => 'EntityApiController',
       'entity class' => 'Entity',
       'admin ui' => array(
-        'path' => 'admin/content/contact',
+        'path' => 'address-book',
         'file' => 'addressbook.admin.inc',
       ),
       'module' => 'addressbook',
-      'access callback' => 'addressbook_access',
+      'access callback' => 'contact_access',
     ),
   );
 }
 
 /**
- * Access callback for Contact entities.
- * 
- * @param  $op
- * @param  null $contact
- * @param  null $account
- * @return bool
+ * Implements hook_access().
  */
-function addressbook_access($op, $contact = NULL, $account = NULL) {
-  return user_access('administer site configuration');
+function contact_access($op = ''){
+  global $user;
+
+  $access = FALSE;
+  /* Get user roles and set access */
+  $roles = $user->roles;
+  if (in_array('administrator', $roles)) {
+    /* Admin is always TRUE */
+    $access = TRUE;
+  } elseif (in_array('authenticated user', $roles)) {
+    /* Authenticated user is always TRUE for the create option.
+     * But he can edit, delete and view only his own contacts. */
+    switch ($op) {
+      case 'create':
+        $access = TRUE;
+        break;
+      case 'update':
+      case 'delete':
+      default: /* "default" is the case when user accesses page "address-book/contact/%" */
+        /* Get the id of the requesting contact */
+        $uri = explode('/', $_SERVER['REQUEST_URI']);
+        $cid = $uri[3];
+        /* Check if current user is the author of the requesting contact. */
+        $query = db_select('contact', 'c')->fields('c', array('cid'));
+        $and = db_and();
+        $and->condition('cid', $cid, '=');
+        $and->condition('user_id', $user->uid, '=');
+        $query->condition($and);
+        $result = $query->execute()->fetchAll();
+        /* If any rows were returned from the query it means that 
+         * this user is actually the author of the requested contact,
+         * so give him an access to edit or delete this contact */
+        $result && $access = TRUE;
+        break;
+    }
+  }
+  return $access;
+}
+
+
+function addressbook_single_contact_title($cid = FALSE) {
+    $title = t('This contact doesn\'t exist');
+    if ($cid) {
+      $contact = contact_load($cid); 
+      if ($contact && $contact_wrapped = entity_metadata_wrapper('contact', $contact)) {
+        $title  = $contact_wrapped->field_first_name->value();
+        $title .= ' ';
+        $title .= $contact_wrapped->field_last_name->value();
+      }
+    }
+    return $title;
+}
+
+/**
+ * Page callback for "address-book/contact/%"
+ * @param  $cid
+ * @return array
+ */
+function addressbook_single_contact_page($cid = FALSE) {
+  /* This page uses its own template */
+  $output = array(
+    '#theme' => 'single_contact',
+    '#attached' => array(
+      'css' => array(
+        drupal_get_path('module', 'addressbook') . '/css/addressbook-single.css'
+      )
+    ),
+  );
+  if ($cid) {
+    $contact = contact_load($cid); 
+    if ($contact && $contact_wrapped = entity_metadata_wrapper('contact', $contact)) {
+      $output['#contact_exist'] = TRUE;
+      $output['#first_name'] = $contact_wrapped->field_first_name->value();
+      $output['#last_name']  = $contact_wrapped->field_last_name->value();
+      $output['#category'] = $contact_wrapped->field_category->value();
+      $output['#phone'] = $contact_wrapped->field_phone->value();
+      $output['#notes'] = $contact_wrapped->field_notes->value();
+      $output['#photo'] = $contact_wrapped->field_photo->value();
+      $output['#birthday'] = date('d/m/Y', $contact_wrapped->field_birthday->value());
+
+      $email = $contact_wrapped->field_email->value();
+      $output['#email'] = l($email, 'mailto:' . $email);
+    }
+  }
+  return $output;
 }

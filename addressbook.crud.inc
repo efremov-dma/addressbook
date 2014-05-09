@@ -11,7 +11,6 @@
  * @return bool
  */
 function contact_create($values) {
-	dsm('create');
 	return entity_create('contact', $values);
 }
 
@@ -72,6 +71,6 @@ function contact_delete($id) {
  * @param  null $langcode
  * @return bool
  */
-function contact_view($contact, $view_mode = 'full', $langcode = NULL) {
-	return entity_view('contact', array($contact), $view_mode, $langcode);
-}
+// function contact_view($contact, $view_mode = 'full', $langcode = NULL) {
+// 	return entity_view('contact', array($contact), $view_mode, $langcode);
+// }
