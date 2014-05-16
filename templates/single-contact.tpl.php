@@ -14,9 +14,10 @@
 			<p><span><?php echo t('Email:'); ?></span> <?php echo $email; ?></p>
 			<p><span><?php echo t('Phone:'); ?></span> <?php echo $phone; ?></p>
 			<p><span><?php echo t('Birthday:'); ?></span> <?php echo $birthday; ?></p>
-			<p><span><?php echo t('Some notes about this contact:'); ?></span><br>
+			<p><span><?php echo t('Some notes about this contact:'); ?></span></p>
+			<div id="addressbook-notes">
 			   <?php echo $notes; ?>
-			</p>
+			</div>
 		</div>
 	</div>
 <?php endif; ?>

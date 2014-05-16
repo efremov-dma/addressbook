@@ -61,6 +61,7 @@ function contact_delete_multiple($ids) {
  * @return bool
  */
 function contact_delete($id) {
+	dsm('delete');
 	return entity_delete('contact', $id);
 }
 

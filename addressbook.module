@@ -25,7 +25,6 @@ function addressbook_theme() {
   );
 }
 
-
 /**
  * Implements hook_menu().
  */
@@ -39,11 +38,18 @@ function addressbook_menu() {
       'page arguments' => array(2),
       'access callback' => 'contact_access',
     ),
+    /*ajax*/
+    'address-book/ajax/%' => array(
+      'page callback' => 'addressbook_ajax_callback',
+      'page arguments' => array(2),
+      'access callback' => TRUE,
+      'type' => MENU_CALLBACK,
+    ),
   );
 }
 
 /**
- * Implements hook_entity_info()
+ * Implements hook_entity_info().
  */
 function addressbook_entity_info() {
   return array(
@@ -80,46 +86,47 @@ function addressbook_entity_info() {
 /**
  * Implements hook_access().
  */
-function contact_access($op = ''){
+function contact_access($op = '', $contact = NULL){
   global $user;
-
   $access = FALSE;
-  /* Get user roles and set access */
+  /* Get user roles and then set accesses. */
   $roles = $user->roles;
   if (in_array('administrator', $roles)) {
     /* Admin is always TRUE */
     $access = TRUE;
-  } elseif (in_array('authenticated user', $roles)) {
+  }
+  elseif (in_array('authenticated user', $roles)) {
     /* Authenticated user is always TRUE for the create option.
-     * But he can edit, delete and view only his own contacts. */
+     * But he can edit, delete and view ONLY his OWN contacts. */
     switch ($op) {
       case 'create':
         $access = TRUE;
         break;
       case 'update':
       case 'delete':
-      default: /* "default" is the case when user accesses page "address-book/contact/%" */
+        $contact->user_id == $user->uid && $access = TRUE;     
+        break;
+      default: 
+        /* "default" is the case when user tries to access the page "address-book/contact/%". */
         /* Get the id of the requesting contact */
         $uri = explode('/', $_SERVER['REQUEST_URI']);
         $cid = $uri[3];
         /* Check if current user is the author of the requesting contact. */
-        $query = db_select('contact', 'c')->fields('c', array('cid'));
-        $and = db_and();
-        $and->condition('cid', $cid, '=');
-        $and->condition('user_id', $user->uid, '=');
-        $query->condition($and);
-        $result = $query->execute()->fetchAll();
-        /* If any rows were returned from the query it means that 
-         * this user is actually the author of the requested contact,
-         * so give him an access to edit or delete this contact */
-        $result && $access = TRUE;
+        $contact = contact_load($cid);
+        if ($contact && $user->uid == $contact->user_id) {
+          $access = TRUE;
+        }
         break;
     }
   }
   return $access;
 }
 
-
+/**
+ * Title callback for the "address-book/contact/%".
+ * @param  $cid
+ * @return string
+ */
 function addressbook_single_contact_title($cid = FALSE) {
     $title = t('This contact doesn\'t exist');
     if ($cid) {
@@ -156,13 +163,82 @@ function addressbook_single_contact_page($cid = FALSE) {
       $output['#last_name']  = $contact_wrapped->field_last_name->value();
       $output['#category'] = $contact_wrapped->field_category->value();
       $output['#phone'] = $contact_wrapped->field_phone->value();
-      $output['#notes'] = $contact_wrapped->field_notes->value();
+      $output['#notes'] = substr( strip_tags( $contact_wrapped->field_notes->value() ), 0, 50 );
       $output['#photo'] = $contact_wrapped->field_photo->value();
       $output['#birthday'] = date('d/m/Y', $contact_wrapped->field_birthday->value());
 
       $email = $contact_wrapped->field_email->value();
       $output['#email'] = l($email, 'mailto:' . $email);
+
+      /* Add ajax libraries. */
+      drupal_add_library('system', 'drupal.ajax');
+      drupal_add_library('system', 'jquery.form');
+
+      /* Make an ajax trigger link. */
+      $link_title = t('[read more]');
+      $link_href  = 'address-book/ajax/' . $cid;
+      $link_attr  = array( 
+        'attributes' => array( 
+          'class' => array('use-ajax'), 
+        ),
+      );
+      /* Output the ajax trigger link. */
+      $output['#notes'] .= '... ';
+      $output['#notes'] .= l($link_title, $link_href, $link_attr);
     }
   }
   return $output;
+}
+
+/**
+ * Ajax callback.
+ * @param $cid
+ */
+function addressbook_ajax_callback($cid = FALSE) {
+  if ($cid) {
+    $contact = contact_load($cid);
+    if ($contact && $contact_wrapped = entity_metadata_wrapper('contact', $contact)) {
+      $notes = $contact_wrapped->field_notes->value();    
+      $commands[] = ajax_command_replace('#addressbook-notes', $notes); 
+      $delivery = array('#type' => 'ajax', '#commands' => $commands);   
+      ajax_deliver($delivery);
+    }
+  }
+}
+
+/**
+ * Implements hook_menu_local_tasks_alter().
+ * @param $data
+ */
+function addressbook_menu_local_tasks_alter(&$data) {
+  /* Set tabs */
+  switch (current_path()) {
+    case 'address-book':
+    case 'address-book/add':
+      $data['tabs'][0]['output'][1]['#link']['path'] = 'address-book/add';
+      $data['tabs'][0]['output'][1]['#link']['href'] = 'address-book/add';
+      $data['tabs'][0]['output'][1]['#link']['title'] = 'Add';
+      unset($data['tabs'][0]['output'][2]);
+      break;
+  }
+}
+
+/**
+ * Implements hook_preprocess_views_view().
+ * @param  $vars
+ */
+function addressbook_preprocess_views_view(&$vars) {
+  $view = $vars['view'];
+  if ($view->name == 'contacts') {
+    drupal_add_js(drupal_get_path('module', 'addressbook') . '/js/delete-confirm.js');
+  }
+}
+
+/**
+ * Implements form_views_FORM_ID_alter().
+ * @param $form
+ * @param $form_state
+ */
+function addressbook_form_views_form_contacts_page_alter(&$form, &$form_state) {
+  $form['output']['#weight'] = 0;
 }

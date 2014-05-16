@@ -1,0 +1,24 @@
+fieldset.addressbook-form-step {
+	display: none;
+}
+
+fieldset.addressbook-form-step-active {
+	display: block;
+}
+
+fieldset.addressbook-form-step .addressbook-prev-step {
+	float: left;
+}
+
+fieldset.addressbook-form-step .addressbook-next-step,
+fieldset.addressbook-form-step #edit-submit {
+	float: right;
+}
+
+#field-birthday-add-more-wrapper fieldset {
+	border: none;
+}
+
+#field-birthday-add-more-wrapper fieldset legend {
+	display: none;
+}
